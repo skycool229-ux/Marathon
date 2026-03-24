@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="마라톤 페이스 계산기 — 목표 완주 시간, 구간 전략, 기록 히스토리를 한 곳에서 관리하세요.">
+<meta name="keywords" content="마라톤 페이스 계산기, 마라톤 기록, 서브4, 네거티브 스플릿, 마라톤 훈련">
+<title>마라톤 페이스 계산기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f7f6f3;
+    --surface: #ffffff;
+    --surface2: #f2f1ee;
+    --border: #e4e2dc;
+    --border2: #ccc9c0;
+    --text: #1a1917;
+    --text2: #6b6860;
+    --text3: #9a9891;
+    --accent: #1a1917;
+    --blue: #1a56a0;
+    --blue-bg: #eaf1fb;
+    --green: #0d6b4f;
+    --green-bg: #e2f4ec;
+    --amber: #8a5010;
+    --amber-bg: #fdf0dc;
+    --red: #9b2b2b;
+    --red-bg: #fdeaea;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --shadow: 0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.04);
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Noto Sans KR', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* 헤더 */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-inner {
+    max-width: 720px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: var(--text);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .logo-text { font-size: 15px; font-weight: 700; letter-spacing: -.02em; }
+  .logo-sub { font-size: 11px; color: var(--text3); }
+  .header-badge {
+    font-size: 11px;
+    background: var(--green-bg);
+    color: var(--green);
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+
+  /* 네비 */
+  .nav-wrap {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    position: sticky;
+    top: 56px;
+    z-index: 99;
+  }
+  .nav {
+    max-width: 720px;
+    margin: 0 auto;
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav-btn {
+    flex-shrink: 0;
+    padding: 14px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text3);
+    cursor: pointer;
+    transition: all .15s;
+    font-family: var(--sans);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .nav-btn:hover { color: var(--text2); }
+  .nav-btn.on { color: var(--text); border-bottom-color: var(--text); }
+  .cnt-badge {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 10px;
+    padding: 1px 6px;
+    color: var(--text3);
+    font-weight: 400;
+  }
+
+  /* 메인 */
+  .main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 24px 60px;
+  }
+
+  /* 섹션 */
+  .sec { display: none; }
+  .sec.on { display: block; }
+
+  /* 카드 */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text2);
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    font-size: 11px;
+  }
+
+  /* 폼 */
+  .field { margin-bottom: 14px; }
+  .field:last-of-type { margin-bottom: 0; }
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text2);
+    margin-bottom: 6px;
+  }
+  .field input, .field select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 14px;
+    font-family: var(--sans);
+    transition: border-color .15s, box-shadow .15s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .field select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239a9891' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+  }
+  .field input:focus, .field select:focus {
+    outline: none;
+    border-color: var(--text);
+    box-shadow: 0 0 0 3px rgba(26,25,23,.08);
+  }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+  /* 시간 입력 */
+  .time-wrap {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+  .time-field { text-align: center; }
+  .time-field input {
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 500;
+    padding: 12px 6px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    width: 100%;
+    background: var(--surface2);
+    color: var(--text);
+    transition: all .15s;
+  }
+  .time-field input:focus {
+    outline: none;
+    border-color: var(--text);
+    background: var(--surface);
+    box-shadow: 0 0 0 3px rgba(26,25,23,.08);
+  }
+  .time-unit {
+    font-size: 11px;
+    color: var(--text3);
+    text-align: center;
+    margin-top: 5px;
+    font-weight: 500;
+  }
+  .time-colon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 300;
+    color: var(--border2);
+    padding-bottom: 20px;
+  }
+
+  /* 버튼 */
+  .btn {
+    width: 100%;
+    padding: 13px;
+    background: var(--text);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: var(--sans);
+    transition: opacity .15s, transform .1s;
+    letter-spacing: .01em;
+    margin-top: 6px;
+  }
+  .btn:hover { opacity: .88; }
+  .btn:active { transform: scale(.99); opacity: .75; }
+  .btn-sm {
+    padding: 7px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    background: var(--surface);
+    color: var(--text2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-family: var(--sans);
+    transition: all .15s;
+  }
+  .btn-sm:hover { background: var(--surface2); border-color: var(--border2); color: var(--text); }
+  .btn-danger {
+    background: none;
+    color: var(--red);
+    border: 1px solid #f0aaaa;
+    padding: 7px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    cursor: pointer;
+    font-family: var(--sans);
+    transition: all .15s;
+  }
+  .btn-danger:hover { background: var(--red-bg); }
+
+  /* 결과 메트릭 */
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 14px 0;
+  }
+  .metric {
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    padding: 14px 10px;
+    text-align: center;
+  }
+  .metric .v {
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 1.1;
+    margin-bottom: 5px;
+    color: var(--text);
+  }
+  .metric .l { font-size: 10px; color: var(--text3); line-height: 1.4; }
+  .metric.blue .v { color: var(--blue); }
+  .metric.green .v { color: var(--green); }
+  .metric.amber .v { color: var(--amber); }
+
+  /* 배지 */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .badge.green { background: var(--green-bg); color: var(--green); }
+  .badge.blue { background: var(--blue-bg); color: var(--blue); }
+  .badge.amber { background: var(--amber-bg); color: var(--amber); }
+  .badge.gray { background: var(--surface2); color: var(--text3); border: 1px solid var(--border); }
+
+  /* 테이블 */
+  .tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .tbl th {
+    text-align: left;
+    padding: 7px 8px;
+    color: var(--text3);
+    border-bottom: 1px solid var(--border);
+    font-weight: 500;
+    font-size: 11px;
+  }
+  .tbl td {
+    padding: 8px 8px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+  }
+  .tbl tr:last-child td { border: none; }
+  .tbl .lc { font-family: var(--sans); color: var(--text2); }
+  .tbl tr:hover td { background: var(--surface2); }
+
+  /* 팁 박스 */
+  .tip {
+    background: var(--blue-bg);
+    border-left: 3px solid var(--blue);
+    padding: 11px 14px;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.65;
+    margin-top: 14px;
+  }
+
+  /* 구분선 */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+
+  /* 전략 선택 */
+  .strat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .strat-btn {
+    padding: 14px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    cursor: pointer;
+    text-align: left;
+    transition: all .15s;
+    font-family: var(--sans);
+    box-shadow: var(--shadow);
+  }
+  .strat-btn:hover { border-color: var(--border2); }
+  .strat-btn.on {
+    border-color: var(--blue);
+    border-width: 2px;
+    background: var(--blue-bg);
+  }
+  .strat-btn .s-name { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+  .strat-btn .s-sub { font-size: 11px; color: var(--text3); line-height: 1.4; }
+  .s-bar { display: flex; gap: 2px; height: 20px; align-items: flex-end; margin-top: 10px; }
+  .s-bar div { flex: 1; border-radius: 2px 2px 0 0; }
+
+  /* 히스토리 아이템 */
+  .hist-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow);
+    transition: border-color .15s;
+  }
+  .hist-item:hover { border-color: var(--border2); }
+  .hist-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+  .hist-name { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+  .hist-meta { font-size: 11px; color: var(--text3); }
+  .hist-time { font-family: var(--mono); font-size: 24px; font-weight: 500; text-align: right; }
+  .hist-pace { font-family: var(--mono); font-size: 11px; color: var(--text3); text-align: right; }
+  .hist-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+  .hist-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+  .hist-actions { display: flex; gap: 6px; }
+
+  /* 필터 */
+  .filter-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .filter-btn {
+    padding: 5px 14px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 12px;
+    background: var(--surface);
+    color: var(--text3);
+    cursor: pointer;
+    font-family: var(--sans);
+    transition: all .15s;
+    font-weight: 500;
+  }
+  .filter-btn:hover { border-color: var(--border2); color: var(--text2); }
+  .filter-btn.on { background: var(--text); color: #fff; border-color: var(--text); }
+
+  /* 빈 상태 */
+  .empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text3);
+  }
+  .empty-icon { font-size: 36px; margin-bottom: 12px; opacity: .5; }
+  .empty-text { font-size: 14px; font-weight: 500; color: var(--text2); margin-bottom: 4px; }
+  .empty-sub { font-size: 12px; }
+
+  /* 토스트 */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--text);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    transition: all .3s;
+    pointer-events: none;
+    z-index: 999;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* 단위 변환 블록 */
+  .conv-block {
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+  }
+  .conv-title { font-size: 11px; font-weight: 700; color: var(--text3); margin-bottom: 12px; letter-spacing: .04em; text-transform: uppercase; }
+
+  /* 차트 */
+  .chart-wrap { background: var(--surface2); border-radius: var(--radius-sm); padding: 12px; margin-top: 8px; }
+
+  /* 반응형 */
+  @media (max-width: 480px) {
+    .main { padding: 16px 16px 60px; }
+    .header { padding: 0 16px; }
+    .nav-wrap { padding: 0 16px; }
+    .metrics { grid-template-columns: repeat(3,1fr); }
+    .strat-grid { grid-template-columns: 1fr; }
+    .hist-time { font-size: 20px; }
+    .time-field input { font-size: 18px; padding: 10px 4px; }
+  }
+
+  /* 페이지 타이틀 */
+  .page-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .page-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* 결과 섹션 */
+  .result-section { animation: fadeIn .25s ease; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+
+  /* 저장 안내 */
+  .save-note {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+  .save-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); display: inline-block; }
+
+  /* 참고표 강조 */
+  .ref-highlight { background: var(--green-bg) !important; }
+</style>
+</head>
+<body>
+
+<!-- 헤더 -->
+<div class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">🏃</div>
+      <div>
+        <div class="logo-text">마라톤 페이스 계산기</div>
+        <div class="logo-sub">Marathon Pace Calculator</div>
+      </div>
+    </div>
+    <div class="header-badge">무료 도구</div>
+  </div>
+</div>
+
+<!-- 네비 -->
+<div class="nav-wrap">
+  <div class="nav">
+    <button class="nav-btn on" onclick="sw('pace')">⏱ 페이스 계산</button>
+    <button class="nav-btn" onclick="sw('strategy')">📋 구간 전략</button>
+    <button class="nav-btn" onclick="sw('record')">📊 기록 분석</button>
+    <button class="nav-btn" onclick="sw('history')">🗂 히스토리 <span class="cnt-badge" id="hist-cnt">0</span></button>
+    <button class="nav-btn" onclick="sw('convert')">↔ 단위 변환</button>
+  </div>
+</div>
+
+<!-- 메인 -->
+<div class="main">
+
+  <!-- ① 페이스 계산 -->
+  <div class="sec on" id="sec-pace">
+    <div class="page-title">페이스 계산</div>
+    <div class="card">
+      <div class="card-title">목표 설정</div>
+      <div class="field">
+        <label>거리 선택</label>
+        <select id="dist-sel" onchange="onDC()">
+          <option value="5">5km</option>
+          <option value="10">10km</option>
+          <option value="21.0975">하프 마라톤 (21.0975km)</option>
+          <option value="42.195" selected>풀 마라톤 (42.195km)</option>
+          <option value="custom">직접 입력 (km)</option>
+        </select>
+      </div>
+      <div class="field" id="cdist-row" style="display:none">
+        <label>거리 직접 입력 (km)</label>
+        <input type="number" id="cdist" step="0.1" min="0.1" placeholder="예: 15.5">
+      </div>
+      <div class="field">
+        <label>목표 완주 시간</label>
+        <div class="time-wrap">
+          <div class="time-field"><input type="number" id="g-h" min="0" max="23" value="4"><div class="time-unit">시간</div></div>
+          <div class="time-colon">:</div>
+          <div class="time-field"><input type="number" id="g-m" min="0" max="59" value="0"><div class="time-unit">분</div></div>
+          <div class="time-colon">:</div>
+          <div class="time-field"><input type="number" id="g-s" min="0" max="59" value="0"><div class="time-unit">초</div></div>
+        </div>
+      </div>
+      <button class="btn" onclick="calcPace()">필요 페이스 계산하기</button>
+    </div>
+
+    <div id="pace-result" class="result-section" style="display:none">
+      <div class="card">
+        <div class="card-title">계산 결과</div>
+        <div class="metrics">
+          <div class="metric blue"><div class="v" id="r-pace-km">--</div><div class="l">필요 페이스<br>분/km</div></div>
+          <div class="metric blue"><div class="v" id="r-pace-mile">--</div><div class="l">필요 페이스<br>분/mile</div></div>
+          <div class="metric"><div class="v" id="r-speed">--</div><div class="l">평균 속도<br>km/h</div></div>
+        </div>
+        <hr class="divider">
+        <div class="card-title">구간별 예상 통과 시간</div>
+        <div id="split-section" style="margin-top:10px"></div>
+        <div class="tip" id="pace-tip"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ② 구간 전략 -->
+  <div class="sec" id="sec-strategy">
+    <div class="page-title">구간 페이스 전략</div>
+    <div class="card">
+      <div class="card-title">목표 시간 (풀 마라톤 기준)</div>
+      <div class="time-wrap" style="margin-bottom:14px">
+        <div class="time-field"><input type="number" id="st-h" min="0" max="23" value="4"><div class="time-unit">시간</div></div>
+        <div class="time-colon">:</div>
+        <div class="time-field"><input type="number" id="st-m" min="0" max="59" value="0"><div class="time-unit">분</div></div>
+        <div class="time-colon">:</div>
+        <div class="time-field"><input type="number" id="st-s" min="0" max="59" value="0"><div class="time-unit">초</div></div>
+      </div>
+      <div class="field">
+        <label>구간 단위</label>
+        <select id="st-seg">
+          <option value="5">5km 단위</option>
+          <option value="10">10km 단위</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">전략 선택</div>
+      <div class="strat-grid" id="strat-grid">
+        <button class="strat-btn on" id="sc-even" onclick="selStrat('even')">
+          <div class="s-name">이븐 페이스</div>
+          <div class="s-sub">처음부터 끝까지 동일한 페이스로 에너지 효율 최적화</div>
+          <div class="s-bar" id="sb-even"></div>
+        </button>
+        <button class="strat-btn" id="sc-negative" onclick="selStrat('negative')">
+          <div class="s-name">네거티브 스플릿</div>
+          <div class="s-sub">전반 느리게 → 후반 가속, 기록 단축에 가장 유리</div>
+          <div class="s-bar" id="sb-negative"></div>
+        </button>
+        <button class="strat-btn" id="sc-positive" onclick="selStrat('positive')">
+          <div class="s-name">포지티브 스플릿</div>
+          <div class="s-sub">전반 빠르게 → 후반 안배, 초반 에너지 소모 주의</div>
+          <div class="s-bar" id="sb-positive"></div>
+        </button>
+        <button class="strat-btn" id="sc-wave" onclick="selStrat('wave')">
+          <div class="s-name">웨이브 페이스</div>
+          <div class="s-sub">빠름↔느림 반복으로 근육 피로 분산 효과</div>
+          <div class="s-bar" id="sb-wave"></div>
+        </button>
+      </div>
+      <button class="btn" onclick="calcStrategy()">구간 전략 생성하기</button>
+    </div>
+
+    <div id="strategy-result" class="result-section" style="display:none">
+      <div class="card">
+        <div class="card-title" id="strat-label">구간 계획</div>
+        <div id="strat-chart" style="margin:12px 0 16px"></div>
+        <div id="strat-table"></div>
+        <div class="tip" id="strat-tip"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ③ 기록 분석 -->
+  <div class="sec" id="sec-record">
+    <div class="page-title">기록 분석 & 저장</div>
+    <div class="card">
+      <div class="card-title">기록 입력</div>
+      <div class="field">
+        <label>대회명</label>
+        <input type="text" id="rec-name" placeholder="예: 서울마라톤 2025">
+      </div>
+      <div class="grid-2" style="margin-bottom:14px">
+        <div class="field" style="margin:0">
+          <label>거리</label>
+          <select id="rec-dist-sel" onchange="onRDC()">
+            <option value="5">5km</option>
+            <option value="10">10km</option>
+            <option value="21.0975">하프 마라톤</option>
+            <option value="42.195" selected>풀 마라톤</option>
+            <option value="custom">직접 입력</option>
+          </select>
+        </div>
+        <div class="field" style="margin:0">
+          <label>날씨</label>
+          <select id="rec-weather">
+            <option value="">-</option>
+            <option>맑음</option><option>흐림</option><option>비</option>
+            <option>강풍</option><option>더움 (25°C+)</option><option>추움 (5°C-)</option>
+          </select>
+        </div>
+      </div>
+      <div class="field" id="rec-cdist-row" style="display:none">
+        <label>거리 직접 입력 (km)</label>
+        <input type="number" id="rec-cdist" step="0.1" min="0.1">
+      </div>
+      <div class="field">
+        <label>완주 기록</label>
+        <div class="time-wrap">
+          <div class="time-field"><input type="number" id="rec-h" min="0" max="23" value="4"><div class="time-unit">시간</div></div>
+          <div class="time-colon">:</div>
+          <div class="time-field"><input type="number" id="rec-m" min="0" max="59" value="30"><div class="time-unit">분</div></div>
+          <div class="time-colon">:</div>
+          <div class="time-field"><input type="number" id="rec-s" min="0" max="59" value="0"><div class="time-unit">초</div></div>
+        </div>
+      </div>
+      <div class="field">
+        <label>메모</label>
+        <input type="text" id="rec-memo" placeholder="예: 컨디션 좋음, 30km 이후 페이스 저하">
+      </div>
+      <button class="btn" onclick="analyzeRecord()">분석 & 저장하기</button>
+    </div>
+
+    <div id="rec-result" class="result-section" style="display:none">
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+          <span id="rec-grade-badge"></span>
+          <span style="font-size:13px;color:var(--text2)" id="rec-grade-desc"></span>
+        </div>
+        <div class="metrics">
+          <div class="metric green"><div class="v" id="rec-pace">--</div><div class="l">평균 페이스<br>분/km</div></div>
+          <div class="metric blue"><div class="v" id="rec-speed">--</div><div class="l">평균 속도<br>km/h</div></div>
+          <div class="metric"><div class="v" id="rec-calorie">--</div><div class="l">소모 칼로리<br>kcal</div></div>
+        </div>
+        <div id="rec-compare"></div>
+        <div class="tip" id="rec-tip"></div>
+        <div class="save-note"><span class="save-dot"></span>브라우저에 영구 저장되었습니다</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ④ 히스토리 -->
+  <div class="sec" id="sec-history">
+    <div class="page-title">기록 히스토리</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div class="filter-row" style="margin:0">
+        <button class="filter-btn on" id="hf-all" onclick="filt('all')">전체</button>
+        <button class="filter-btn" id="hf-42" onclick="filt('42')">풀마라톤</button>
+        <button class="filter-btn" id="hf-21" onclick="filt('21')">하프</button>
+        <button class="filter-btn" id="hf-10" onclick="filt('10')">10km</button>
+        <button class="filter-btn" id="hf-5" onclick="filt('5')">5km</button>
+      </div>
+      <button class="btn-danger" onclick="clearAll()">전체 삭제</button>
+    </div>
+    <div id="hist-list"></div>
+    <div id="hist-chart-wrap" style="display:none">
+      <div class="card">
+        <div class="card-title">풀 마라톤 기록 추이</div>
+        <div class="chart-wrap" id="hist-chart"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑤ 단위 변환 -->
+  <div class="sec" id="sec-convert">
+    <div class="page-title">단위 변환</div>
+    <div class="conv-block">
+      <div class="conv-title">분/km → km/h · 분/mile · m/s</div>
+      <div class="grid-2" style="margin-bottom:12px">
+        <div class="field" style="margin:0"><label>분</label><input type="number" id="cv-min" min="1" max="30" value="5" oninput="cvP()"></div>
+        <div class="field" style="margin:0"><label>초</label><input type="number" id="cv-sec" min="0" max="59" value="0" oninput="cvP()"></div>
+      </div>
+      <div class="metrics" style="margin:0">
+        <div class="metric blue"><div class="v" id="cv-kmh">--</div><div class="l">km/h</div></div>
+        <div class="metric"><div class="v" id="cv-milepace">--</div><div class="l">분/mile</div></div>
+        <div class="metric"><div class="v" id="cv-mps">--</div><div class="l">m/s</div></div>
+      </div>
+    </div>
+    <div class="conv-block">
+      <div class="conv-title">km/h → 분/km · 마라톤 예상 기록</div>
+      <div class="field" style="margin-bottom:12px"><label>속도 (km/h)</label><input type="number" id="cv-speed" min="1" max="40" step="0.1" value="12" oninput="cvS()"></div>
+      <div class="metrics" style="margin:0">
+        <div class="metric green"><div class="v" id="cv-paceout">--</div><div class="l">분/km</div></div>
+        <div class="metric blue"><div class="v" id="cv-pace42">--</div><div class="l">풀 마라톤</div></div>
+        <div class="metric"><div class="v" id="cv-pace21">--</div><div class="l">하프 마라톤</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">페이스 참고표</div>
+      <table class="tbl">
+        <thead><tr><th>페이스</th><th>km/h</th><th>풀 마라톤</th><th>등급</th></tr></thead>
+        <tbody id="ref-table"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- 토스트 -->
+<div class="toast" id="toast">저장 완료</div>
+
+<script>
+var records = [];
+var curFilter = 'all';
+var curStrat = 'even';
+var SK = 'marathon_records_v3';
+
+function loadRecords() {
+  try { var d = localStorage.getItem(SK); if (d) records = JSON.parse(d); } catch(e) { records = []; }
+  updateCnt();
+}
+function saveRecords() {
+  try { localStorage.setItem(SK, JSON.stringify(records)); } catch(e) {}
+  updateCnt();
+  toast('💾 기록 저장 완료!');
+}
+function updateCnt() { document.getElementById('hist-cnt').textContent = records.length; }
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2200);
+}
+
+function sw(t) {
+  var ids = ['pace','strategy','record','history','convert'];
+  document.querySelectorAll('.nav-btn').forEach(function(el,i){ el.classList.toggle('on', ids[i]===t); });
+  document.querySelectorAll('.sec').forEach(function(el){ el.classList.remove('on'); });
+  document.getElementById('sec-'+t).classList.add('on');
+  if(t==='history') renderHist();
+  if(t==='strategy') drawStratBars();
+  if(t==='convert') { buildRefTable(); cvP(); cvS(); }
+}
+
+function onDC() { document.getElementById('cdist-row').style.display = document.getElementById('dist-sel').value==='custom' ? 'block' : 'none'; }
+function onRDC() { document.getElementById('rec-cdist-row').style.display = document.getElementById('rec-dist-sel').value==='custom' ? 'block' : 'none'; }
+
+function gd(selId, cId) {
+  var v = document.getElementById(selId).value;
+  if(v==='custom') { var n = parseFloat(document.getElementById(cId).value); return(!isNaN(n)&&n>0) ? n : null; }
+  return parseFloat(v);
+}
+function fp(spk) { var m=Math.floor(spk/60); var s=Math.round(spk%60); return m+':'+(s<10?'0':'')+s; }
+function ft(ts) { var h=Math.floor(ts/3600); var m=Math.floor((ts%3600)/60); var s=Math.round(ts%60); if(h>0) return h+'h '+(m<10?'0':'')+m+'m'; return m+'m'+(s>0?' '+s+'s':''); }
+function ftl(ts) { var h=Math.floor(ts/3600); var m=Math.floor((ts%3600)/60); var s=Math.round(ts%60); if(h>0) return h+'시간 '+m+'분'+(s>0?' '+s+'초':''); return m+'분'+(s>0?' '+s+'초':''); }
+
+function getGrade(dist, ts) {
+  if(dist>=42) {
+    if(ts<10800) return {g:'서브 3시간', c:'green'};
+    if(ts<12600) return {g:'서브 3:30', c:'green'};
+    if(ts<14400) return {g:'서브 4시간', c:'blue'};
+    if(ts<18000) return {g:'완주', c:'amber'};
+    return {g:'완주', c:'amber'};
+  }
+  var spk = ts/dist;
+  if(spk<240) return {g:'엘리트', c:'green'};
+  if(spk<300) return {g:'A급', c:'green'};
+  if(spk<360) return {g:'B급', c:'blue'};
+  return {g:'완주', c:'amber'};
+}
+function getGradeDesc(dist, ts) {
+  if(dist>=42) {
+    if(ts<10800) return '상위 5% 수준의 훌륭한 기록입니다.';
+    if(ts<12600) return '상위 20% 수준의 좋은 기록입니다.';
+    if(ts<14400) return '평균 이상의 기록입니다.';
+    return '마라톤 완주를 진심으로 축하드립니다!';
+  }
+  var spk = ts/dist;
+  if(spk<300) return '매우 우수한 기록입니다.';
+  if(spk<360) return '좋은 기록입니다.';
+  return '완주를 진심으로 축하드립니다!';
+}
+function getTip(spk) {
+  if(spk<240) return '엘리트급 페이스입니다. 부상 방지를 위해 충분한 워밍업과 회복 훈련을 병행하세요.';
+  if(spk<300) return '서브3 도전 구간입니다. 고강도 인터벌 훈련과 영양 보충 전략이 필요합니다.';
+  if(spk<360) return '서브3:30 목표 구간입니다. 꾸준한 장거리 훈련과 페이스 유지 훈련이 핵심입니다.';
+  if(spk<420) return '서브4 도전 구간입니다. LSD(장거리 천천히 달리기)로 기초 지구력을 쌓으세요.';
+  if(spk<480) return '안정적인 완주 페이스입니다. 후반 페이스 저하에 대비해 전반부를 여유있게 달리세요.';
+  return '걷기와 달리기를 병행하는 구간입니다. 규칙적인 리듬 유지가 중요합니다.';
+}
+
+function calcPace() {
+  var dist = gd('dist-sel','cdist');
+  var h = parseInt(document.getElementById('g-h').value)||0;
+  var mi = parseInt(document.getElementById('g-m').value)||0;
+  var s = parseInt(document.getElementById('g-s').value)||0;
+  var ts = h*3600 + mi*60 + s;
+  if(!dist||!ts) { alert('거리와 목표 시간을 입력해주세요.'); return; }
+  var spk = ts/dist;
+  document.getElementById('r-pace-km').textContent = fp(spk);
+  document.getElementById('r-pace-mile').textContent = fp(spk*1.60934);
+  document.getElementById('r-speed').textContent = ((dist/ts)*3600).toFixed(2);
+  document.getElementById('split-section').innerHTML = buildSplits(dist, spk);
+  document.getElementById('pace-tip').textContent = getTip(spk);
+  document.getElementById('pace-result').style.display = 'block';
+}
+
+function buildSplits(dist, spk) {
+  var cps = [];
+  if(dist>=42) cps=[{l:'5km',k:5},{l:'10km',k:10},{l:'하프 (21km)',k:21.0975},{l:'30km',k:30},{l:'완주 (42.195km)',k:42.195}];
+  else if(dist>=21) cps=[{l:'5km',k:5},{l:'10km',k:10},{l:'완주 (하프)',k:21.0975}];
+  else if(dist>=10) cps=[{l:'5km',k:5},{l:'완주 (10km)',k:dist}];
+  else cps=[{l:'완주',k:dist}];
+  var rows = cps.filter(function(c){ return c.k<=dist+.01; }).map(function(c){
+    return '<tr><td class="lc">'+c.l+'</td><td>'+ftl(c.k*spk)+'</td><td>'+fp(spk)+'/km</td></tr>';
+  }).join('');
+  return '<table class="tbl"><thead><tr><th>구간</th><th>통과 예상 시간</th><th>목표 페이스</th></tr></thead><tbody>'+rows+'</tbody></table>';
+}
+
+function analyzeRecord() {
+  var dist = gd('rec-dist-sel','rec-cdist');
+  var h = parseInt(document.getElementById('rec-h').value)||0;
+  var mi = parseInt(document.getElementById('rec-m').value)||0;
+  var s = parseInt(document.getElementById('rec-s').value)||0;
+  var ts = h*3600 + mi*60 + s;
+  if(!dist||!ts) { alert('거리와 기록을 입력해주세요.'); return; }
+  var spk = ts/dist; var kmh = (dist/ts)*3600;
+  document.getElementById('rec-pace').textContent = fp(spk);
+  document.getElementById('rec-speed').textContent = kmh.toFixed(2);
+  document.getElementById('rec-calorie').textContent = Math.round(dist*60*.95).toLocaleString();
+  var gr = getGrade(dist,ts);
+  document.getElementById('rec-grade-badge').innerHTML = '<span class="badge '+gr.c+'">'+gr.g+'</span>';
+  document.getElementById('rec-grade-desc').textContent = getGradeDesc(dist,ts);
+  document.getElementById('rec-compare').innerHTML = dist>=42 ? buildCompare(ts) : '';
+  document.getElementById('rec-tip').textContent = getTip(spk);
+  document.getElementById('rec-result').style.display = 'block';
+  var rec = {
+    id: Date.now(),
+    name: document.getElementById('rec-name').value || ('기록 #'+(records.length+1)),
+    dist: dist, totalSec: ts, spk: spk, kmh: kmh,
+    grade: gr.g, gradeClass: gr.c,
+    weather: document.getElementById('rec-weather').value,
+    memo: document.getElementById('rec-memo').value,
+    date: new Date().toLocaleDateString('ko-KR')
+  };
+  records.unshift(rec);
+  saveRecords();
+}
+
+function buildCompare(ts) {
+  var bm = [{l:'서브 3시간',s:10800},{l:'서브 3:30',s:12600},{l:'서브 4시간',s:14400},{l:'서브 5시간',s:18000}];
+  var rows = bm.map(function(b){
+    var d=ts-b.s; var sign=d<0?'-':'+'; var col=d<0?'var(--green)':'var(--red)';
+    return '<tr><td class="lc">'+b.l+'</td><td style="color:'+col+'">'+sign+ft(Math.abs(d))+'</td></tr>';
+  }).join('');
+  return '<hr class="divider"><p style="font-size:11px;color:var(--text3);margin-bottom:8px">기준 기록 대비</p><table class="tbl"><thead><tr><th>기준</th><th>차이</th></tr></thead><tbody>'+rows+'</tbody></table>';
+}
+
+function selStrat(s) {
+  curStrat = s;
+  ['even','negative','positive','wave'].forEach(function(k){ document.getElementById('sc-'+k).classList.toggle('on', k===s); });
+}
+
+function getStratPaces(base, n, s) {
+  if(s==='even') return Array(n).fill(base);
+  if(s==='negative') return Array.from({length:n},function(_,i){ return base*(1+.05*(.5-i/(n-1))); });
+  if(s==='positive') return Array.from({length:n},function(_,i){ return base*(1-.05*(.5-i/(n-1))); });
+  if(s==='wave') return Array.from({length:n},function(_,i){ return i%2===0?base*.97:base*1.03; });
+  return Array(n).fill(base);
+}
+
+function drawStratBars() {
+  var bcs = {even:'#1a56a0',negative:'#0d6b4f',positive:'#8a5010',wave:'#5c3ab8'};
+  ['even','negative','positive','wave'].forEach(function(s){
+    var pp = getStratPaces(360, 8, s);
+    var mx=Math.max.apply(null,pp), mn=Math.min.apply(null,pp), rng=mx-mn||1;
+    var bars = pp.map(function(p){ var h=Math.round(4+((mx-p)/rng)*14); return '<div style="flex:1;height:'+h+'px;background:'+bcs[s]+';opacity:.65;border-radius:2px 2px 0 0"></div>'; }).join('');
+    var el = document.getElementById('sb-'+s);
+    if(el) el.innerHTML = bars;
+  });
+}
+
+function calcStrategy() {
+  var h=parseInt(document.getElementById('st-h').value)||0;
+  var mi=parseInt(document.getElementById('st-m').value)||0;
+  var s=parseInt(document.getElementById('st-s').value)||0;
+  var ts=h*3600+mi*60+s;
+  var segKm=parseInt(document.getElementById('st-seg').value)||5;
+  if(!ts) { alert('목표 시간을 입력해주세요.'); return; }
+  var dist=42.195; var base=ts/dist;
+  var segs=[];
+  for(var km=segKm; km<dist; km+=segKm) segs.push(km);
+  segs.push(dist);
+  var paces = getStratPaces(base, segs.length, curStrat);
+  var labels = {even:'이븐 페이스',negative:'네거티브 스플릿',positive:'포지티브 스플릿',wave:'웨이브 페이스'};
+  var tips = {
+    even:'전 구간 균일한 페이스로 에너지를 효율적으로 배분합니다. GPS 워치의 페이스 알림을 미리 설정해두세요.',
+    negative:'전반부를 목표보다 3~5% 느리게 달리고 후반에 가속합니다. 충분한 기초 지구력이 필요합니다.',
+    positive:'초반에 빠르게 달립니다. 체력 소모가 크므로 에너지젤 보충 시점을 철저히 계획하세요.',
+    wave:'빠름↔느림을 반복하여 사용 근육군을 교대합니다. 자연스러운 페이스 변화로 지루함도 줄어듭니다.'
+  };
+  var bc = {even:'#1a56a0',negative:'#0d6b4f',positive:'#8a5010',wave:'#5c3ab8'}[curStrat];
+  var mx=Math.max.apply(null,paces), mn=Math.min.apply(null,paces), rng=mx-mn||1;
+  var prevKm=0; var totalSec=0; var rows=''; var chartBars='';
+  segs.forEach(function(km,i){
+    var sl=km-prevKm; var spk=paces[i]; var ss=sl*spk; totalSec+=ss;
+    var bh=Math.round(16+((mx-spk)/rng)*44);
+    chartBars+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">';
+    chartBars+='<div style="font-size:8px;color:var(--text3)">'+fp(spk)+'</div>';
+    chartBars+='<div style="flex:1;width:100%;display:flex;align-items:flex-end"><div style="width:100%;height:'+bh+'px;background:'+bc+';opacity:.7;border-radius:2px 2px 0 0"></div></div>';
+    chartBars+='<div style="font-size:8px;color:var(--text3)">'+km.toFixed(0)+'k</div></div>';
+    var ind = spk<base ? '<span style="color:var(--green);font-size:10px">▲빠름</span>' : spk>base ? '<span style="color:var(--red);font-size:10px">▼느림</span>' : '<span style="color:var(--blue);font-size:10px">→유지</span>';
+    rows+='<tr><td class="lc">'+(prevKm<1?'출발':prevKm.toFixed(0))+'→'+km.toFixed(1)+'km</td><td>'+fp(spk)+'/km</td><td>'+ftl(ss)+'</td><td>'+ftl(totalSec)+'</td><td>'+ind+'</td></tr>';
+    prevKm=km;
+  });
+  document.getElementById('strat-label').textContent = labels[curStrat]+' — '+ftl(ts)+' 목표';
+  document.getElementById('strat-chart').innerHTML = '<div style="display:flex;gap:3px;height:80px;align-items:flex-end;background:var(--surface2);padding:8px;border-radius:6px">'+chartBars+'</div>';
+  document.getElementById('strat-table').innerHTML = '<table class="tbl"><thead><tr><th>구간</th><th>페이스</th><th>구간 시간</th><th>누적 시간</th><th>강도</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  document.getElementById('strat-tip').textContent = tips[curStrat];
+  document.getElementById('strategy-result').style.display = 'block';
+}
+
+function filt(f) {
+  curFilter = f;
+  ['all','42','21','10','5'].forEach(function(k){
+    document.getElementById('hf-'+k).classList.toggle('on', k===f);
+  });
+  renderHist();
+}
+function getFiltered() {
+  if(curFilter==='all') return records;
+  return records.filter(function(r){
+    if(curFilter==='42') return r.dist>=42;
+    if(curFilter==='21') return r.dist>=21&&r.dist<42;
+    if(curFilter==='10') return r.dist>=10&&r.dist<21;
+    if(curFilter==='5') return r.dist<10;
+    return true;
+  });
+}
+function renderHist() {
+  var items = getFiltered();
+  var el = document.getElementById('hist-list');
+  if(!items.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🏅</div><div class="empty-text">저장된 기록이 없습니다</div><div class="empty-sub">기록 분석 탭에서 완주 기록을 저장하세요</div></div>';
+    document.getElementById('hist-chart-wrap').style.display = 'none';
+    return;
+  }
+  el.innerHTML = items.map(function(r,i){
+    var dl = r.dist>=42 ? '풀 마라톤' : r.dist>=21 ? '하프 마라톤' : r.dist.toFixed(1)+'km';
+    var tags = '<span class="badge '+r.gradeClass+'">'+r.grade+'</span>';
+    if(r.weather) tags += ' <span class="badge gray">'+r.weather+'</span>';
+    var memo = r.memo ? '<p style="font-size:11px;color:var(--text3);margin:6px 0 0">'+r.memo+'</p>' : '';
+    return '<div class="hist-item">'+
+      '<div class="hist-top">'+
+      '<div><div class="hist-name">'+r.name+'</div><div class="hist-meta">'+r.date+' · '+dl+'</div></div>'+
+      '<div><div class="hist-time">'+ft(r.totalSec)+'</div><div class="hist-pace">'+fp(r.spk)+'/km · '+r.kmh.toFixed(2)+'km/h</div></div>'+
+      '</div>'+memo+
+      '<div class="hist-bottom">'+
+      '<div class="hist-tags">'+tags+'</div>'+
+      '<div class="hist-actions">'+
+      '<button class="btn-sm" onclick="loadRec('+i+')">분석 보기</button>'+
+      '<button class="btn-danger" onclick="delRec('+i+')" style="padding:6px 12px">삭제</button>'+
+      '</div></div></div>';
+  }).join('');
+  var full42 = records.filter(function(r){ return r.dist>=42; });
+  if(full42.length>=2) { renderChart(full42); document.getElementById('hist-chart-wrap').style.display='block'; }
+  else document.getElementById('hist-chart-wrap').style.display='none';
+}
+
+function renderChart(recs) {
+  var sorted = recs.slice().reverse();
+  var mn=Math.min.apply(null,sorted.map(function(r){return r.totalSec;}));
+  var mx=Math.max.apply(null,sorted.map(function(r){return r.totalSec;}));
+  var rng=mx-mn||1; var H=50;
+  var pts = sorted.map(function(r,i){ return {x:(i/(sorted.length-1||1))*96+2, y:H-((r.totalSec-mn)/rng)*(H-10)+5, r:r}; });
+  var poly = pts.map(function(p){ return p.x+','+p.y; }).join(' ');
+  var dots = pts.map(function(p){ return '<circle cx="'+p.x+'" cy="'+p.y+'" r="3.5" fill="#1a56a0"/><title>'+p.r.name+': '+ft(p.r.totalSec)+'</title>'; }).join('');
+  var lbls = pts.map(function(p){ return '<text x="'+p.x+'" y="'+(p.y-7)+'" text-anchor="middle" font-size="7" fill="#9a9891" font-family="JetBrains Mono, monospace">'+ft(p.r.totalSec)+'</text>'; }).join('');
+  document.getElementById('hist-chart').innerHTML = '<svg viewBox="0 0 100 65" width="100%" height="65" preserveAspectRatio="none"><polyline points="'+poly+'" fill="none" stroke="#1a56a0" stroke-width="1.5" stroke-linejoin="round"/>'+dots+lbls+'</svg>';
+}
+
+function delRec(idx) {
+  var filtered=getFiltered(); var rec=filtered[idx]; var i=records.indexOf(rec);
+  if(i>-1) records.splice(i,1);
+  saveRecords(); renderHist();
+}
+function clearAll() {
+  if(!records.length) return;
+  if(confirm('모든 기록을 삭제할까요? 이 작업은 되돌릴 수 없습니다.')) {
+    records=[]; localStorage.removeItem(SK); updateCnt(); renderHist(); toast('기록이 삭제되었습니다');
+  }
+}
+function loadRec(idx) {
+  var filtered=getFiltered(); var r=filtered[idx];
+  sw('record');
+  document.getElementById('rec-name').value=r.name;
+  document.getElementById('rec-h').value=Math.floor(r.totalSec/3600);
+  document.getElementById('rec-m').value=Math.floor((r.totalSec%3600)/60);
+  document.getElementById('rec-s').value=Math.round(r.totalSec%60);
+  document.getElementById('rec-weather').value=r.weather||'';
+  document.getElementById('rec-memo').value=r.memo||'';
+  var sel=document.getElementById('rec-dist-sel');
+  if(r.dist>=42) sel.value='42.195';
+  else if(r.dist>=21) sel.value='21.0975';
+  else if(r.dist>=10) sel.value='10';
+  else if(r.dist>=5) sel.value='5';
+  else { sel.value='custom'; document.getElementById('rec-cdist').value=r.dist; onRDC(); }
+}
+
+function cvP() {
+  var m=parseInt(document.getElementById('cv-min').value)||0;
+  var s=parseInt(document.getElementById('cv-sec').value)||0;
+  var ts=m*60+s; if(!ts) return;
+  document.getElementById('cv-kmh').textContent=(3600/ts).toFixed(2);
+  document.getElementById('cv-milepace').textContent=fp(ts*1.60934);
+  document.getElementById('cv-mps').textContent=(1000/ts).toFixed(2);
+}
+function cvS() {
+  var kmh=parseFloat(document.getElementById('cv-speed').value)||0; if(!kmh) return;
+  var spk=3600/kmh;
+  document.getElementById('cv-paceout').textContent=fp(spk);
+  document.getElementById('cv-pace42').textContent=ftl(spk*42.195);
+  document.getElementById('cv-pace21').textContent=ftl(spk*21.0975);
+}
+function buildRefTable() {
+  var spks=[240,300,330,360,390,420,480,540,600];
+  var rows=spks.map(function(spk){
+    var kmh=(3600/spk).toFixed(2); var full=ftl(spk*42.195);
+    var gc=spk<300?'green':spk<420?'blue':'amber';
+    return '<tr><td>'+fp(spk)+'/km</td><td>'+kmh+'</td><td>'+full+'</td><td><span class="badge '+gc+'" style="font-size:10px">'+fp(spk)+'</span></td></tr>';
+  }).join('');
+  document.getElementById('ref-table').innerHTML=rows;
+}
+
+// 초기화
+loadRecords();
+drawStratBars();
+</script>
+</body>
+</html>
